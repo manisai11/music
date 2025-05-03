@@ -1,5 +1,4 @@
 streamlit
-fer
 Pillow
 numpy
-tensorflow
+requests

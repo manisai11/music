@@ -1,4 +1,5 @@
 streamlit
-deepface
+fer
 Pillow
 numpy
+tensorflow

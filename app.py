@@ -1,7 +1,9 @@
 import streamlit as st
-from fer import FER
-import numpy as np
 from PIL import Image
+import numpy as np
+import requests
+import json
+import io
 import base64
 
 # Set page config
@@ -11,64 +13,54 @@ st.set_page_config(
     layout="wide"
 )
 
-# Initialize FER detector
-detector = FER(mtcnn=True)
+# Using Hugging Face API for emotion detection
+def detect_emotion(image):
+    API_URL = "https://api-inference.huggingface.co/models/dima806/facial_emotions_image_detection"
+    headers = {"Authorization": f"Bearer {st.secrets['huggingface_token']}"}
+    
+    # Convert image to bytes
+    img_byte_arr = io.BytesIO()
+    image.save(img_byte_arr, format='JPEG')
+    img_byte_arr = img_byte_arr.getvalue()
 
-def analyze_emotion(image):
-    """Analyze emotion in image using FER"""
     try:
-        # Convert image to numpy array if it's not already
-        if isinstance(image, Image.Image):
-            image = np.array(image)
-        
-        # Detect emotions
-        emotions = detector.detect_emotions(image)
-        if emotions:
-            # Get the first face detected
-            emotions_dict = emotions[0]['emotions']
-            dominant_emotion = max(emotions_dict.items(), key=lambda x: x[1])[0]
-            return dominant_emotion, emotions_dict
-        return None, None
+        response = requests.post(API_URL, headers=headers, data=img_byte_arr)
+        return response.json()
     except Exception as e:
-        st.error(f"Error analyzing emotion: {str(e)}")
-        return None, None
+        st.error(f"Error in emotion detection: {str(e)}")
+        return None
 
-def display_results(emotion, emotions_dict):
-    """Display emotion detection results"""
-    if emotion and emotions_dict:
-        # Emoji mapping
-        emoji_dict = {
-            'happy': '😊',
-            'sad': '😢',
-            'angry': '😠',
-            'neutral': '😐',
-            'surprise': '😮',
-            'fear': '😨',
-            'disgust': '🤢'
-        }
+def map_emotion_to_music(emotion):
+    emotion_music_map = {
+        'happy': 'happy.mp3',
+        'sad': 'sad.mp3',
+        'neutral': 'neutral.mp3',
+        'angry': 'angry.mp3',
+        'surprise': 'surprise.mp3',
+        'fear': 'sad.mp3',
+        'disgust': 'angry.mp3'
+    }
+    return emotion_music_map.get(emotion.lower(), 'neutral.mp3')
 
-        # Display detected emotion
-        st.write(f"### Detected Emotion: {emotion.capitalize()} {emoji_dict.get(emotion, '')}")
+def display_emotion_results(emotion, confidence):
+    # Emoji mapping
+    emoji_dict = {
+        'happy': '😊',
+        'sad': '😢',
+        'angry': '😠',
+        'neutral': '😐',
+        'surprise': '😮',
+        'fear': '😨',
+        'disgust': '🤢'
+    }
 
-        # Display emotion probabilities
-        st.write("### Emotion Probabilities:")
-        for emo, prob in emotions_dict.items():
-            col1, col2, col3 = st.columns([1, 6, 1])
-            with col1:
-                st.write(f"{emoji_dict.get(emo, '')}")
-            with col2:
-                st.progress(float(prob))
-            with col3:
-                st.write(f"{prob:.1f}%")
-
-def play_music(emotion):
-    """Play music based on detected emotion"""
-    if emotion:
-        try:
-            st.write(f"### Now Playing: {emotion.capitalize()} Music 🎵")
-            st.audio(f"music/{emotion.lower()}.mp3")
-        except Exception as e:
-            st.error(f"Error playing music: {str(e)}")
+    # Display emotion with emoji
+    st.write(f"### Detected Emotion: {emotion} {emoji_dict.get(emotion.lower(), '')}")
+    
+    # Display confidence
+    st.write("### Confidence Score:")
+    st.progress(confidence)
+    st.write(f"{confidence:.1f}%")
 
 def main():
     st.title("Emotion Based Music Player 🎵")
@@ -91,37 +83,40 @@ def main():
     if option == "Upload Image":
         uploaded_file = st.file_uploader("Choose an image...", type=['jpg', 'jpeg', 'png'])
         if uploaded_file is not None:
-            # Display uploaded image
-            image = Image.open(uploaded_file)
-            st.image(image, caption='Uploaded Image', use_column_width=True)
-            
-            # Analyze emotion
-            with st.spinner('Analyzing emotion...'):
-                emotion, emotions_dict = analyze_emotion(image)
-                
-                # Display results and play music
-                if emotion:
-                    display_results(emotion, emotions_dict)
-                    play_music(emotion)
-                else:
-                    st.warning("No face detected in the image. Please try another image.")
-
+            process_image(uploaded_file)
     else:
         camera_photo = st.camera_input("Take a photo")
         if camera_photo is not None:
-            # Display captured image
-            image = Image.open(camera_photo)
+            process_image(camera_photo)
+
+def process_image(image_file):
+    try:
+        # Display uploaded/captured image
+        image = Image.open(image_file)
+        st.image(image, caption='Processed Image', use_column_width=True)
+
+        # Detect emotion
+        with st.spinner('Analyzing emotion...'):
+            result = detect_emotion(image)
             
-            # Analyze emotion
-            with st.spinner('Analyzing emotion...'):
-                emotion, emotions_dict = analyze_emotion(image)
-                
-                # Display results and play music
-                if emotion:
-                    display_results(emotion, emotions_dict)
-                    play_music(emotion)
-                else:
-                    st.warning("No face detected in the image. Please try another photo.")
+            if result and isinstance(result, list) and len(result) > 0:
+                # Get the emotion with highest confidence
+                emotion_data = result[0]
+                emotion = emotion_data['label']
+                confidence = emotion_data['score'] * 100
+
+                # Display results
+                display_emotion_results(emotion, confidence)
+
+                # Play corresponding music
+                music_file = map_emotion_to_music(emotion)
+                st.write(f"### Now Playing: {emotion.capitalize()} Music 🎵")
+                st.audio(f"music/{music_file}")
+            else:
+                st.warning("No face detected. Please try another image with a clear face view.")
+
+    except Exception as e:
+        st.error(f"Error processing image: {str(e)}")
 
 if __name__ == "__main__":
     main()

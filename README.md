@@ -1,59 +1,58 @@
-🎶 Music Player Recommendation Project
-A web-based music player recommondation system that detects facial emotiona nd suggests song to boost up emotion.
-Built with Python and Flask,OpenCV designed for seamless playback and playlist management.
+Music Player Recommendation System
 
-✨ Features
-Live video processing using OpenCV.
+A web-based music recommendation system that detects facial emotion and suggests songs to uplift or match the user's current mood.
+Built using Python, Flask, and OpenCV, it enables seamless playback and personalized playlist management.
 
-ML based CNN model trained on FER dataset to identify emotion with accuracy of 85%.
+Features:
 
-Specialised Playlists: Create and manage your personalized music collections effortlessly.
+1. Live webcam-based facial emotion detection using OpenCV.
 
-Robust Backend API: Serves music files and metadata efficiently.
+2. CNN model trained on the FER2013 dataset with 85% validation accuracy.
 
-🚀 Getting Started
-These instructions will get you a copy of the project up and running on your local machine for development and testing.
+3. Emotion-matched music playlists to enhance user experience.
+
+4. Flask-based backend API to serve music files and metadata.
+
+5. Lightweight and responsive front-end UI.
+
+Getting Started
+Follow these steps to set up and run the project on your local machine.
 
 Prerequisites
-Make sure you have the following installed:
+Ensure you have the following installed:
 
-Python 3.8+
+Python 3.8 or higher
 
 pip (Python package installer)
 
 Installation
-Follow these steps to set up your development environment:
 
-Clone the repository:
+1. Clone the Repository
+```sh   
+git clone "https://github.com/manisai11/music.git"
+cd "music"
+```
 
-Bash
-
-git clone https://github.com/manisai11/music.git
-cd music
-Create a virtual environment (recommended):
-
-Bash
-
-python -m venv venv
-Activate the virtual environment:
+3. Create a Virtual Environment (Recommended)
+```sh
+python -m venv "venv"
+```
+4. Activate the Virtual Environment
 
 On Windows:
-
-Bash
-
+```sh
 .\venv\Scripts\activate
+```
+
 On macOS/Linux:
-
-Bash
-
-source venv/bin/activate
-Install dependencies:
-
-Bash
-
-pip install -r requirements.txt
-Run the application:
-
-Bash
-
-python app.py
+```sh
+source "venv/bin/activate"
+```
+4. Install Dependencies
+```sh
+pip install -r "requirements.txt"
+```
+5. Run the Application
+```sh
+python "app.py"
+```
